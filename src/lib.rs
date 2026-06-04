@@ -4,7 +4,7 @@ use std::io::{stdin, stdout, Write};
 use crossterm::cursor;
 use serde::{Serialize,Deserialize};
 use crossterm::{
-    event::{self,Event,KeyCode,KeyEvent},
+    event::{self,Event,KeyCode,KeyEvent,KeyEventKind},
     execute,
     terminal::{disable_raw_mode,enable_raw_mode,Clear,ClearType},
     cursor::{Hide,Show}
@@ -31,7 +31,7 @@ pub struct  Library{
 pub fn parse_args(args:Vec<String>) ->Result<Command,String>{
     if args.is_empty() {
         return Err(
-            "Usage:\n cargo run -- list\n cargo run -- scan file_path\n cargo run -- search <keyword>"
+            "Usage:\n cargo run -- list\n cargo run -- scan folder\n cargo run -- search <keyword> -- cargo run -- play"
                 .to_string(),
         );
     }
@@ -169,6 +169,10 @@ pub fn play_interactive(library:&Library)->Result<(),Box<dyn Error>> {
     enable_raw_mode()?;
     let mut stdout = stdout();
     execute!(stdout,Hide)?;
+    
+    while event::poll(std::time::Duration::from_millis(0))? {
+        let _ = event::read()?;
+    }
     let mut selected:usize = 0;
     // 监听循环
     loop {
@@ -184,17 +188,17 @@ pub fn play_interactive(library:&Library)->Result<(),Box<dyn Error>> {
         stdout.flush()?;   // ← 在 for 循环画完列表之后、event::read() 之前加上
 
         match event::read()? {
-            Event::Key(KeyEvent { code:KeyCode::Up,.. }) =>{
+            Event::Key(KeyEvent { code:KeyCode::Up,kind: KeyEventKind::Press,.. }) =>{
                 if selected > 0 {
                     selected -= 1;
                 }
             },
-            Event::Key(KeyEvent { code:KeyCode::Down,.. }) =>{
+            Event::Key(KeyEvent { code:KeyCode::Down,kind: KeyEventKind::Press,.. }) =>{
                 if selected < library.songs.len()-1 {
                     selected += 1;
                 }
             },
-            Event::Key(KeyEvent { code: KeyCode::Enter, .. }) => {
+            Event::Key(KeyEvent { code: KeyCode::Enter, kind: KeyEventKind::Press,.. }) => {
                 let song = &library.songs[selected];
 
                 execute!(stdout,Show)?;
@@ -218,7 +222,7 @@ pub fn play_interactive(library:&Library)->Result<(),Box<dyn Error>> {
                 enable_raw_mode()?;
                 execute!(stdout,Hide)?;
             },
-            Event::Key(KeyEvent { code: KeyCode::Char('q'), .. }) => {
+            Event::Key(KeyEvent { code: KeyCode::Char('q'), kind: KeyEventKind::Press,.. }) => {
                 break;  // 退出
             },
             _ => {}
@@ -230,13 +234,13 @@ pub fn play_interactive(library:&Library)->Result<(),Box<dyn Error>> {
 }
 
 fn play_song(song: &Song) -> Result<(), Box<dyn Error>> {
-    let sink_handle = DeviceSinkBuilder::open_default_sink()?;
-    let player = Player::connect_new(sink_handle.mixer());
+    let sink_handle = DeviceSinkBuilder::open_default_sink()?;//打开系统默认音频输出设备
+    let player = Player::connect_new(sink_handle.mixer());//创建一个播放器
 
     let file = File::open(&song.path)?;
-    let source = Decoder::try_from(file)?;
+    let source = Decoder::try_from(file)?;//把音频文件解码成可播放音频流
 
-    player.append(source);
-    player.sleep_until_end();
+    player.append(source);//把当前歌曲放进播放器
+    player.sleep_until_end();//阻塞当前线程，等歌曲播完
     Ok(())
 }
