@@ -1,0 +1,199 @@
+import { PlayState } from "common.slint";
+import { Theme } from "theme.slint";
+import { Slider } from "std-widgets.slint";
+
+// ============================================================
+// detail.slint — 右侧详情区 (30%)
+// ============================================================
+// 布局: 封面占位 → 歌曲标题 → 艺术家 → 路径 → 进度条 → 当前时间/总时长
+//        + (未来可扩展歌词区)
+//
+// 预留 callback:
+//   seek-changed(float) — 用户拖进度条时触发，Rust 侧跳转播放位置
+//   open-file-location(string) — 在文件管理器中打开歌曲所在文件夹
+//
+// 预留 property:
+//   detail-visible: in-out bool — 是否显示详情（未选中时隐藏）
+//   cover-image: image — 专辑封面（暂用纯色占位）
+//   song-title: string — 当前歌曲标题
+//   song-artist: string — 艺术家
+//   song-path: string — 文件路径
+//   duration-total: string — 总时长文本
+//   duration-current: string — 已播放时长文本
+//   progress: in-out float — 播放进度百分比 (0~100)
+//   play-state: PlayState — 当前播放状态
+//
+// Rust 侧对接:
+//   用户点列表中的歌 → Rust 更新 detail 的 song-title/artist/path 等属性
+//   Slider 拖动 → callback seek-changed(float)
+//   Timer 每 200ms 更新 progress + duration-current
+// ============================================================
+
+export component Detail {
+    in-out property <bool> detail-visible: false;
+    in property <image> cover-image;
+    in property <string> song-title: "未选择歌曲";
+    in property <string> song-artist: "—";
+    in property <string> song-path: "—";
+    in property <string> duration-total: "00:00";
+    in property <string> duration-current: "00:00";
+    in-out property <float> progress: 0.0;
+    in property <PlayState> play-state: PlayState.Stopped;
+
+    callback seek-changed(float);
+    callback open-file-location(string);
+
+    height: 100%;
+    width: 100%;
+
+    Rectangle {
+        width: 100%;
+        height: 100%;
+        background: Theme.detail-bg;
+
+        // 未选中歌曲时显示占位
+        if !root.detail-visible : Rectangle {
+            width: 100%;
+            height: 100%;
+            Text {
+                text: "从列表中选择一首歌曲";
+                color: Theme.text-sub;
+                font-size: 14px;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+        }
+
+        // 已选中歌曲时显示详情
+        if root.detail-visible : VerticalLayout {
+            padding-left: 24px;
+            padding-right: 20px;
+            padding-top: 24px;
+            padding-bottom: 24px;
+            spacing: 16px;
+
+            // ===== 封面占位 =====
+            // 预留：未来从 MP3 ID3 标签读封面，或用外部图片
+            Rectangle {
+                width: 200px;
+                height: 200px;
+                border-radius: 12px;
+                background: Theme.nav-bg;
+
+                // 封面图片（暂无图片时用图标占位）
+                if root.cover-image.width == 0 : Image {
+                    source: @image-url("icons/playlist.svg");
+                    width: 80px;
+                    height: 80px;
+                    colorize: Theme.text-sub;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+
+                Image {
+                    source: root.cover-image;
+                    width: 100%;
+                    height: 100%;
+                    image-fit: cover;
+                }
+            }
+
+            // ===== 歌曲标题 =====
+            Text {
+                text: root.song-title;
+                color: Theme.text-main;
+                font-size: 18px;
+                font-weight: 700;
+                overflow: elide;
+            }
+
+            // ===== 艺术家 =====
+            Text {
+                text: root.song-artist;
+                color: Theme.text-sub;
+                font-size: 13px;
+                overflow: elide;
+            }
+
+            // ===== 路径（点击可在文件管理器打开） =====
+            Text {
+                text: root.song-path;
+                color: Theme.text-sub;
+                font-size: 11px;
+                opacity: 0.6;
+                overflow: elide;
+            }
+
+            // ===== 播放进度条 =====
+            Slider {
+                minimum: 0.0;
+                maximum: 100.0;
+                value <=> root.progress;
+                // 拖动触发 seek
+                changed(percent) => {
+                    root.seek-changed(percent);
+                }
+            }
+
+            // ===== 时间显示 =====
+            HorizontalLayout {
+                Text {
+                    text: root.duration-current;
+                    color: Theme.text-sub;
+                    font-size: 12px;
+                }
+                Rectangle {
+                    horizontal-stretch: 1;
+                    background: transparent;
+                }
+                Text {
+                    text: root.duration-total;
+                    color: Theme.text-sub;
+                    font-size: 12px;
+                }
+            }
+
+            // 弹簧
+            Rectangle {
+                vertical-stretch: 1;
+                background: transparent;
+            }
+
+            // ===== 操作按钮行 =====
+            HorizontalLayout {
+                spacing: 12px;
+
+                // 在文件管理器中显示
+                ta-open := TouchArea {
+                    clicked => {
+                        root.open-file-location(root.song-path);
+                    }
+                    Rectangle {
+                        border-radius: 4px;
+                        background: ta-open.pressed ? Theme.hover-bg : transparent;
+                        HorizontalLayout {
+                            padding-left: 4px;
+                            padding-right: 8px;
+                            padding-top: 4px;
+                            padding-bottom: 4px;
+                            spacing: 4px;
+                            Image {
+                                source: @image-url("icons/folder-open.svg");
+                                width: 14px;
+                                height: 14px;
+                                colorize: Theme.text-sub;
+                                vertical-alignment: center;
+                            }
+                            Text {
+                                text: "打开文件位置";
+                                color: Theme.text-sub;
+                                font-size: 12px;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

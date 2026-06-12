@@ -1,0 +1,98 @@
+import { NavItem } from "common.slint";
+import { Theme } from "theme.slint";
+
+// ============================================================
+// nav.slint — 左侧导航栏 (18%)
+// ============================================================
+// 布局: 顶部 "曲库" 标题 + 可点击导航项列表
+//
+// 预留 callback:
+//   nav-item-selected(int) — 用户点导航项时触发，Rust 侧切换视图/过滤
+//
+// 预留 property:
+//   current-nav-index: in-out int — 当前选中导航项 (0/1/2)
+//   nav-items: [NavItem] — 导航项列表，Rust 侧用 VecModel 填充
+//
+// Rust 侧对接:
+//   let nav_model: VecModel<NavItem> = ...;
+//   nav_model.push(NavItem { label: "全部歌曲".into() });
+//   app.set_nav_items(nav_model.into());
+//   app.on_nav_item_selected(move |idx| { /* 过滤列表 */ });
+// ============================================================
+
+export component Nav {
+    in-out property <int> current-nav-index: 0;
+    in property <[NavItem]> nav-items;
+
+    callback nav-item-selected(int);
+
+    height: 100%;
+    width: 100%;
+
+    VerticalLayout {
+        spacing: 4px;
+        padding-left: 16px;
+        padding-right: 12px;
+        padding-top: 16px;
+        padding-bottom: 16px;
+
+        // ── 顶部标题 ──
+        Text {
+            text: "曲库";
+            color: Theme.text-main;
+            font-size: 14px;
+            font-weight: 600;
+            opacity: 0.5;
+        }
+
+        // 间距
+        Rectangle {
+            height: 8px;
+            background: transparent;
+        }
+
+        // ── 导航项循环 ──
+        // for 循环：每个 NavItem 渲染一行
+        for nav-item[idx] in nav-items : Rectangle {
+            height: 36px;
+            // 当前选中项用 accent 色高亮
+            background: idx == root.current-nav-index ? Theme.accent.with-alpha(0.25) : transparent;
+            border-radius: 6px;
+
+            TouchArea {
+                clicked => {
+                    // 点击时更新 current-nav-index + 触发 Rust 回调
+                    root.current-nav-index = idx;
+                    root.nav-item-selected(idx);
+                }
+
+                HorizontalLayout {
+                    padding-left: 10px;
+                    alignment: center;
+
+                    Text {
+                        text: nav-item.label;
+                        color: idx == root.current-nav-index ? Theme.accent : Theme.text-main;
+                        font-size: 14px;
+                        font-weight: idx == root.current-nav-index ? 600 : 400;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+        }
+
+        // ===== 底部弹簧：把后续元素挤到底部 =====
+        Rectangle {
+            vertical-stretch: 1;
+            background: transparent;
+        }
+
+        // ── 统计信息 ──
+        // 预留：显示 "共 N 首歌"
+        Text {
+            text: "共 0 首歌";
+            color: Theme.text-sub;
+            font-size: 12px;
+        }
+    }
+}

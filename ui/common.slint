@@ -1,0 +1,27 @@
+// ============================================================
+// common.slint — 跨文件共享的数据结构与枚举
+// ============================================================
+
+// 播放状态枚举：Stopped / Playing / Paused
+// Rust 侧对应：pub enum PlayState { Stopped, Playing, Paused }
+export enum PlayState {
+    Stopped,
+    Playing,
+    Paused,
+}
+
+// 歌曲数据模型 —— 每条歌曲在 Slint 侧的结构
+// Rust 侧对应：pub struct SongData { title, path, artist, duration }
+// 在 Rust 中用 VecModel<SongData> 填充列表
+export struct SongData {
+    title: string,
+    path: string,
+    artist: string,
+    duration: string,
+}
+
+// 导航项模型 —— 左侧导航栏的每一项
+// Rust 侧可以推送 ["全部歌曲", "最近播放", "收藏"]
+export struct NavItem {
+    label: string,
+}

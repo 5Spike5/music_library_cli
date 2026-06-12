@@ -1,0 +1,98 @@
+// ============================================================
+// theme.slint — 全局主题系统
+// ============================================================
+
+export enum ThemeMode {
+    light,       // 月白
+    dark,        // 极夜
+    amber,       // 琥珀
+    dusk,        // 暮紫
+}
+
+export global Theme {
+    in-out property <ThemeMode> mode: ThemeMode.dark;
+
+    // ── 主底色 ──
+    out property <brush> window-bg:
+        mode == ThemeMode.light  ? #FAFAFA :
+        mode == ThemeMode.dark   ? #121212 :
+        mode == ThemeMode.amber  ? #FDF6EE :
+        #1B1B2F;
+
+    // ── 顶栏 ──
+    out property <brush> header-bg:
+        mode == ThemeMode.light  ? #F0F0F0 :
+        mode == ThemeMode.dark   ? #1A1A1A :
+        mode == ThemeMode.amber  ? #F5E6D3 :
+        #232340;
+
+    // ── 左侧导航栏 ──
+    out property <brush> nav-bg:
+        mode == ThemeMode.light  ? #F5F5F5 :
+        mode == ThemeMode.dark   ? #0F0F0F :
+        mode == ThemeMode.amber  ? #F0DCC0 :
+        #151528;
+
+    // ── 中间歌曲列表 ──
+    out property <brush> list-bg:
+        mode == ThemeMode.light  ? #FFFFFF :
+        mode == ThemeMode.dark   ? #161616 :
+        mode == ThemeMode.amber  ? #FFFBF6 :
+        #1E1E33;
+
+    // ── 右侧详情 ──
+    out property <brush> detail-bg:
+        mode == ThemeMode.light  ? #F8F8F8 :
+        mode == ThemeMode.dark   ? #1E1E1E :
+        mode == ThemeMode.amber  ? #F8EDDC :
+        #282844;
+
+    // ── 底部控制栏 ──
+    out property <brush> footer-bg:
+        mode == ThemeMode.light  ? #E8E8E8 :
+        mode == ThemeMode.dark   ? #282828 :
+        mode == ThemeMode.amber  ? #8B5E3C :
+        #0E0E1A;
+
+    // ── 主文字色 ──
+    out property <brush> text-main:
+        mode == ThemeMode.light  ? #1A1A1A :
+        mode == ThemeMode.dark   ? #E0E0E0 :
+        mode == ThemeMode.amber  ? #3A2B1E :
+        #E0DBF0;
+
+    // ── 次要文字色（比主文字淡一档） ──
+    out property <brush> text-sub:
+        mode == ThemeMode.light  ? #888888 :
+        mode == ThemeMode.dark   ? #999999 :
+        mode == ThemeMode.amber  ? #8C7A6A :
+        #968EB8;
+
+    // ── 选中高亮色 ──
+    out property <brush> accent:
+        mode == ThemeMode.light  ? #1DB954 :
+        mode == ThemeMode.dark   ? #1DB954 :
+        mode == ThemeMode.amber  ? #D4893A :
+        #7B68EE;
+
+    // ── 分割线 ──
+    out property <brush> divider:
+        mode == ThemeMode.light  ? #E0E0E0 :
+        mode == ThemeMode.dark   ? #2A2A2A :
+        mode == ThemeMode.amber  ? #E8D5C0 :
+        #2A2A3A;
+
+    // ── 按钮悬停色 ──
+    out property <brush> hover-bg:
+        mode == ThemeMode.light  ? #E8E8E8 :
+        mode == ThemeMode.dark   ? #2A2A2A :
+        mode == ThemeMode.amber  ? #F0DCC0 :
+        #2A2A3A;
+
+    // ── Footer 文字色（某些主题 footer 深色需要浅字） ──
+    out property <brush> footer-text:
+        mode == ThemeMode.light  ? #1A1A1A :
+        mode == ThemeMode.dark   ? #E0E0E0 :
+        mode == ThemeMode.amber  ? #FAFAFA :
+        #E0DBF0;
+}

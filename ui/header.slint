@@ -1,0 +1,128 @@
+// ============================================================
+// header.slint — 顶部栏
+// ============================================================
+// 布局: [图标] [标题] [搜索框] ———— [主题色块按钮]
+//
+// 预留 callback:
+//   search-submitted(string) — 用户回车搜索时触发，Rust 侧过滤列表
+//   scan-folder-clicked()     — 用户点扫描按钮时触发，Rust 侧弹出文件夹选择器
+//
+// 预留 property:
+//   window-title: string — 窗口标题，Rust 侧可动态设置（如 "Music Library · 15 首歌"）
+// ============================================================
+
+import { LineEdit } from "std-widgets.slint";
+import { ThemeMode } from "theme.slint";
+import { Theme } from "theme.slint";
+
+export component Header {
+    in property <string> window-title: "Music Library";
+
+    callback search-submitted(string);
+    callback scan-folder-clicked();
+
+    height: 100%;
+    width: 100%;
+
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        alignment: center;
+        spacing: 12px;
+        // ===== 左侧：标题 =====
+        Text {
+            text: window-title;
+            color: Theme.text-main;
+            font-size: 22px;
+            font-weight: 700;
+            vertical-alignment: center;
+        }
+
+        // ===== 弹簧：把按钮推到右边 =====
+        Rectangle {
+            horizontal-stretch: 1;
+        }
+
+        // ===== 搜索框 =====
+        search-input := LineEdit {
+            width: 220px;
+            // height: 18px;
+            preferred-height: 30px;
+            placeholder-text: "搜索歌曲…";
+            // 回车时触发 Rust 侧搜索
+            accepted => { root.search-submitted(search-input.text); }
+        }
+
+        // ===== 扫描文件夹按钮 =====
+        scan-touch := TouchArea {
+            height: 22px;
+            clicked => { root.scan-folder-clicked(); }
+            Image {
+                source: @image-url("icons/folder-open.svg");
+                width: 22px;
+                height: 22px;
+                colorize: Theme.text-main;
+                opacity: scan-touch.pressed ? 0.5 : 0.7;
+            }
+        }
+
+        // ===== 主题切换色块按钮组 =====
+        // 用 Rectangle 模拟色块按钮，比 std Button 更轻量
+
+        // Light
+        TouchArea {
+            height: 18px;
+            clicked => { Theme.mode = ThemeMode.light; }
+            Rectangle {
+                width: 18px;
+                height: 18px;
+                border-radius: 9px;
+                background: #FAFAFA;
+                border-width: Theme.mode == ThemeMode.light ? 2px : 0px;
+                border-color: Theme.accent;
+            }
+        }
+
+        // Dark
+        TouchArea {
+            height: 18px;
+            clicked => { Theme.mode = ThemeMode.dark; }
+            Rectangle {
+                width: 18px;
+                height: 18px;
+                border-radius: 9px;
+                background: #121212;
+                border-width: Theme.mode == ThemeMode.dark ? 2px : 0px;
+                border-color: Theme.accent;
+            }
+        }
+
+        // Amber
+        TouchArea {
+            height: 18px;
+            clicked => { Theme.mode = ThemeMode.amber; }
+            Rectangle {
+                width: 18px;
+                height: 18px;
+                border-radius: 9px;
+                background: #FDF6EE;
+                border-width: Theme.mode == ThemeMode.amber ? 2px : 0px;
+                border-color: Theme.accent;
+            }
+        }
+
+        // Dusk
+        TouchArea {
+            height: 18px;
+            clicked => { Theme.mode = ThemeMode.dusk; }
+            Rectangle {
+                width: 18px;
+                height: 18px;
+                border-radius: 9px;
+                background: #1B1B2F;
+                border-width: Theme.mode == ThemeMode.dusk ? 2px : 0px;
+                border-color: Theme.accent;
+            }
+        }
+    }
+}

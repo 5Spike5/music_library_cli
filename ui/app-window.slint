@@ -1,0 +1,187 @@
+// ============================================================
+// app-window.slint — 主窗口（根组件）
+// ============================================================
+// 布局 (1280×800):
+//   ┌────────────────────────────────────────┐
+//   │  Header          (100% × 10%)          │
+//   ├────┬──────────────────────┬────────────┤
+//   │Nav │  List               │  Detail    │
+//   │18% │  52%                │  30%       │
+//   │    │                     │            │
+//   ├────┴──────────────────────┴────────────┤
+//   │  Footer          (100% × 12%)          │
+//   └────────────────────────────────────────┘
+//
+// 编译方式 (build.rs):
+//   slint_build::compile("ui/app-window.slint").unwrap();
+//   自动追踪 import 的子文件
+// ============================================================
+
+import { Theme, ThemeMode } from "theme.slint";
+import { NavItem, SongData, PlayState } from "common.slint";
+import { Header } from "header.slint";
+import { Nav } from "nav.slint";
+import { List } from "list.slint";
+import { Detail } from "detail.slint";
+import { Footer } from "footer.slint";
+
+export component AppWindow inherits Window {
+    icon: @image-url("icons/app-icon.png");
+    preferred-width: 1280px;
+    preferred-height: 800px;
+    background: Theme.window-bg;
+    title: "Music Library";
+
+    // ============================================================
+    // 🧩 组件组装
+    // ============================================================
+
+    VerticalLayout {
+        spacing: 0px;
+
+        // ── 顶栏 (10%) ──
+        Rectangle {
+            vertical-stretch: 14;
+            min-height: 88px;
+            background: Theme.header-bg;
+
+            Header {
+                // 绑定 Header 的 callback 到 AppWindow
+                // Rust 侧通过 app.on_xxx() 监听
+                search-submitted(keyword) => { root.search-submitted(keyword); }
+                scan-folder-clicked => { root.scan-folder-clicked(); }
+            }
+        }
+
+        // ── 中间内容区 (78%)：Nav + List + Detail ──
+        Rectangle {
+            vertical-stretch: 72;
+            min-height: 0px;
+
+            HorizontalLayout {
+                spacing: 0px;
+
+                // 左侧导航 (18%)
+                Rectangle {
+                    horizontal-stretch: 18;
+                    min-width: 0px;
+                    background: Theme.nav-bg;
+
+                    Nav {
+                        nav-items: root.nav-items;
+                        current-nav-index <=> root.current-nav-index;
+                        nav-item-selected(idx) => { root.nav-item-selected(idx); }
+                    }
+                }
+
+                // 中间歌曲列表 (52%)
+                Rectangle {
+                    horizontal-stretch: 52;
+                    min-width: 0px;
+
+                    List {
+                        songs: root.songs;
+                        current-song-index <=> root.current-song-index;
+                        song-selected(idx) => { root.song-selected(idx); }
+                        song-double-clicked(idx) => { root.song-double-clicked(idx); }
+                    }
+                }
+
+                // 右侧详情 (30%)
+                Rectangle {
+                    horizontal-stretch: 32;
+                    min-width: 0px;
+                    background: Theme.detail-bg;
+
+                    Detail {
+                        detail-visible: root.current-song-index >= 0;
+                        song-title: root.current-song-title;
+                        song-artist: root.current-song-artist;
+                        song-path: root.current-song-path;
+                        duration-total: root.duration-total;
+                        duration-current: root.duration-current;
+                        progress <=> root.progress;
+                        play-state: root.play-state;
+                        seek-changed(pos) => { root.seek-changed(pos); }
+                        open-file-location(path) => { root.open-file-location(path); }
+                    }
+                }
+            }
+        }
+
+        // ── 底部控制栏 (12%) ──
+        Rectangle {
+            vertical-stretch: 12;
+            min-height: 80px;
+            background: Theme.footer-bg;
+
+            Footer {
+                now-playing-text: root.now-playing-text;
+                play-state: root.play-state;
+                volume <=> root.volume;
+                shuffle-on <=> root.shuffle-on;
+                loop-on <=> root.loop-on;
+                prev-clicked => { root.prev-clicked(); }
+                play-pause-clicked => { root.play-pause-clicked(); }
+                next-clicked => { root.next-clicked(); }
+                shuffle-toggled(on) => { root.shuffle-toggled(on); }
+                loop-toggled(on) => { root.loop-toggled(on); }
+                volume-changed(vol) => { root.volume-changed(vol); }
+            }
+        }
+    }
+
+    // ============================================================
+    // 📡 AppWindow 层级的 property（Rust ↔ Slint 通信枢纽）
+    // ============================================================
+
+    // ── 导航 ──
+    in property <[NavItem]> nav-items;
+    in-out property <int> current-nav-index: 0;
+
+    // ── 歌曲列表 ──
+    in property <[SongData]> songs;
+    in-out property <int> current-song-index: -1;
+
+    // ── 当前歌曲详情 ──
+    in-out property <string> current-song-title: "未选择歌曲";
+    in-out property <string> current-song-artist: "—";
+    in-out property <string> current-song-path: "—";
+    in-out property <string> duration-total: "00:00";
+    in-out property <string> duration-current: "00:00";
+    in-out property <float> progress: 0.0;
+
+    // ── 播放状态 ──
+    in-out property <PlayState> play-state: PlayState.Stopped;
+    in-out property <string> now-playing-text: "—";
+    in-out property <float> volume: 50.0;
+    in-out property <bool> shuffle-on: false;
+    in-out property <bool> loop-on: false;
+
+    // ============================================================
+    // 📞 AppWindow 层级的 callback（Rust 侧实现逻辑）
+    // ============================================================
+
+    // Header
+    callback search-submitted(string);
+    callback scan-folder-clicked();
+
+    // Nav
+    callback nav-item-selected(int);
+
+    // List
+    callback song-selected(int);
+    callback song-double-clicked(int);
+
+    // Detail
+    callback seek-changed(float);
+    callback open-file-location(string);
+
+    // Footer
+    callback prev-clicked();
+    callback play-pause-clicked();
+    callback next-clicked();
+    callback shuffle-toggled(bool);
+    callback loop-toggled(bool);
+    callback volume-changed(float);
+}

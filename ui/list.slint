@@ -1,0 +1,198 @@
+import { SongData } from "common.slint";
+import { Theme } from "theme.slint";
+
+// ============================================================
+// list.slint — 中间歌曲列表 (52%)
+// ============================================================
+// 布局: 表头 (序号 |   | 标题 | 时长) + 可滚动歌曲行
+//
+// 预留 callback:
+//   song-selected(int) — 用户点某首歌时触发，Rust 侧更新 detail + 准备播放
+//   song-double-clicked(int) — 双击直接播放
+//
+// 预留 property:
+//   songs: [SongData] — 歌曲数据，Rust 侧用 VecModel<SongData> 填充
+//   current-song-index: in-out int — 当前选中/播放的歌曲索引 (-1 表示未选)
+//
+// Rust 侧对接:
+//   let song_model: VecModel<SongData> = ...;
+//   song_model.push(SongData { title, path, artist, duration });
+//   app.set_songs(song_model.into());
+//   app.on_song_selected(move |idx| { /* 更新 detail */ });
+// ============================================================
+
+export component List {
+    in-out property <int> current-song-index: -1;
+    in property <[SongData]> songs;
+
+    callback song-selected(int);
+    callback song-double-clicked(int);
+
+    height: 100%;
+    width: 100%;
+
+    Rectangle {
+        width: 100%;
+        height: 100%;
+        background: Theme.list-bg;
+
+        VerticalLayout {
+            spacing: 0px;
+
+            // ===== 表头 =====
+            Rectangle {
+                height: 36px;
+                background: Theme.list-bg;
+
+                HorizontalLayout {
+                    padding-left: 16px;
+                    padding-right: 16px;
+                    alignment: center;
+
+                    Text {
+                        text: "#";
+                        width: 40px;
+                        color: Theme.text-sub;
+                        font-size: 12px;
+                        font-weight: 600;
+                        vertical-alignment: center;
+                    }
+                    Text {
+                        text: "♫";
+                        width: 24px;
+                        color: Theme.text-sub;
+                        font-size: 12px;
+                        font-weight: 600;
+                        vertical-alignment: center;
+                    }
+                    Text {
+                        text: "标题";
+                        horizontal-stretch: 1;
+                        color: Theme.text-sub;
+                        font-size: 12px;
+                        font-weight: 600;
+                        vertical-alignment: center;
+                    }
+                    Text {
+                        text: "时长";
+                        width: 50px;
+                        color: Theme.text-sub;
+                        font-size: 12px;
+                        font-weight: 600;
+                        vertical-alignment: center;
+                        horizontal-alignment: right;
+                    }
+                }
+            }
+
+            // ===== 分隔线 =====
+            Rectangle {
+                height: 1px;
+                background: Theme.divider;
+            }
+
+            // ===== 歌曲行 (可滚动) =====
+            // 用 VerticalLayout 包裹所有行；数据多时外层应套 Flickable
+            Rectangle {
+                vertical-stretch: 1;
+
+                // 空状态：无歌曲时显示提示
+                if songs.length == 0 : Rectangle {
+                    width: 100%;
+                    height: 100%;
+
+                    Text {
+                        text: "曲库为空，请点击  扫描图标添加音乐文件夹";
+                        color: Theme.text-sub;
+                        font-size: 14px;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+
+                // 有歌曲时渲染列表
+                if songs.length > 0 : Flickable {
+                    viewport-y: 0px;
+
+                    VerticalLayout {
+                        spacing: 0px;
+
+                        for song[idx] in songs : Rectangle {
+                            height: 42px;
+                            // 选中行高亮
+                            background: idx == root.current-song-index
+                                ? Theme.accent.with-alpha(0.15)
+                                : transparent;
+
+                            TouchArea {
+                                clicked => {
+                                    root.current-song-index = idx;
+                                    root.song-selected(idx);
+                                }
+                                double-clicked => {
+                                    root.song-double-clicked(idx);
+                                }
+
+                                HorizontalLayout {
+                                    padding-left: 16px;
+                                    padding-right: 16px;
+                                    alignment: center;
+
+                                    // 序号
+                                    Rectangle {
+                                        width: 40px;
+                                        // 如果当前正在放这首歌，显示播放动画图标
+                                        Text {
+                                            text: "\{idx + 1}";
+                                            color: idx == root.current-song-index
+                                                ? Theme.accent
+                                                : Theme.text-sub;
+                                            font-size: 13px;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+
+                                    // 播放状态图标（当前播放行显示 play-circle）
+                                    Rectangle {
+                                        width: 24px;
+                                        if idx == root.current-song-index : Image {
+                                            source: @image-url("icons/play-circle.svg");
+                                            width: 16px;
+                                            height: 16px;
+                                            colorize: Theme.accent;
+                                            horizontal-alignment: center;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+
+                                    // 标题
+                                    Text {
+                                        text: song.title;
+                                        horizontal-stretch: 1;
+                                        color: idx == root.current-song-index
+                                            ? Theme.accent
+                                            : Theme.text-main;
+                                        font-size: 14px;
+                                        font-weight: idx == root.current-song-index ? 600 : 400;
+                                        vertical-alignment: center;
+                                        overflow: elide;
+                                    }
+
+                                    // 时长
+                                    Text {
+                                        text: song.duration;
+                                        width: 50px;
+                                        color: Theme.text-sub;
+                                        font-size: 12px;
+                                        vertical-alignment: center;
+                                        horizontal-alignment: right;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
