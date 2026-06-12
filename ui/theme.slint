@@ -89,6 +89,64 @@ export global Theme {
         mode == ThemeMode.amber  ? #F0DCC0 :
         #2A2A3A;
 
+    // ── 搜索框背景 ──
+    out property <brush> search-bg:
+        mode == ThemeMode.light  ? #FFFFFFCC :
+        mode == ThemeMode.dark   ? #2A2A2A :
+        mode == ThemeMode.amber  ? #FFF7ED :
+        #303050;
+
+    // ── 搜索框边框 ──
+    out property <brush> search-border:
+        mode == ThemeMode.light  ? #D9D9D9 :
+        mode == ThemeMode.dark   ? #3A3A3A :
+        mode == ThemeMode.amber  ? #E2C9AB :
+        #4A4A74;
+
+    // ── 搜索框聚焦高亮 ──
+    out property <brush> search-focus-ring:
+        mode == ThemeMode.light  ? #1DB95455 :
+        mode == ThemeMode.dark   ? #1DB95466 :
+        mode == ThemeMode.amber  ? #D4893A66 :
+        #7B68EE66;
+
+    // ── 搜索框占位/图标 ──
+    out property <brush> search-placeholder:
+        mode == ThemeMode.light  ? #8D8D8D :
+        mode == ThemeMode.dark   ? #A0A0A0 :
+        mode == ThemeMode.amber  ? #947B65 :
+        #A7A0CA;
+
+    out property <brush> search-icon:
+        mode == ThemeMode.light  ? #6F6F6F :
+        mode == ThemeMode.dark   ? #B8B8B8 :
+        mode == ThemeMode.amber  ? #7F6855 :
+        #C6BFF0;
+
+    out property <brush> toolbar-group-bg:
+        mode == ThemeMode.light  ? #FFFFFF88 :
+        mode == ThemeMode.dark   ? #171717DD :
+        mode == ThemeMode.amber  ? #FFF8EF :
+        #23233BCC;
+
+    out property <brush> toolbar-group-border:
+        mode == ThemeMode.light  ? #DCDCDC :
+        mode == ThemeMode.dark   ? #2E2E2E :
+        mode == ThemeMode.amber  ? #E7CBAA :
+        #3E3E63;
+
+    out property <brush> toolbar-chip-bg:
+        mode == ThemeMode.light  ? #FFFFFF99 :
+        mode == ThemeMode.dark   ? #232323 :
+        mode == ThemeMode.amber  ? #FFF3E0 :
+        #2A2A44;
+
+    out property <brush> toolbar-chip-border:
+        mode == ThemeMode.light  ? #D7D7D7 :
+        mode == ThemeMode.dark   ? #343434 :
+        mode == ThemeMode.amber  ? #E2C5A0 :
+        #47476D;
+
     // ── Footer 文字色（某些主题 footer 深色需要浅字） ──
     out property <brush> footer-text:
         mode == ThemeMode.light  ? #1A1A1A :

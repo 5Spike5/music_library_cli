@@ -36,9 +36,12 @@ export component Footer {
         background: Theme.footer-bg;
 
         HorizontalLayout {
+            width: parent.width;
+            height: 42px;
+            y: (parent.height - 42px) / 2;
             padding-left: 20px;
             padding-right: 20px;
-            alignment: center;
+            spacing: 16px;
 
             // ===== 左侧：当前播放歌曲名 =====
             Text {
@@ -60,64 +63,87 @@ export component Footer {
             // 中间：播放控制按钮组
             // ====================
             HorizontalLayout {
+                height: 42px;
                 spacing: 20px;
-                alignment: center;
 
                 // 上一首 ⏮ → skip-back.svg
-                prev-touch := TouchArea {
-                    height: 22px;
-                    clicked => { root.prev-clicked(); }
-                    Image {
-                        source: @image-url("icons/skip-back.svg");
+                Rectangle {
+                    width: 22px;
+                    height: 42px;
+                    background: transparent;
+
+                    prev-touch := TouchArea {
                         width: 22px;
                         height: 22px;
-                        colorize: Theme.footer-text;
-                        opacity: prev-touch.pressed ? 0.6 : 1.0;
+                        y: 10px;
+                        clicked => { root.prev-clicked(); }
+                        Image {
+                            source: @image-url("icons/skip-back.svg");
+                            width: 22px;
+                            height: 22px;
+                            colorize: Theme.footer-text;
+                            opacity: prev-touch.pressed ? 0.6 : 1.0;
+                        }
                     }
                 }
 
                 // 播放/暂停 ▶ / ⏸ → play-circle.svg / pause-circle.svg
                 // 用 if 互斥：Slint 的 @image-url 是编译期宏，不能放三目表达式
-                play-btn := TouchArea {
+                Rectangle {
+                    width: 42px;
                     height: 42px;
-                    clicked => { root.play-pause-clicked(); }
-                    Rectangle {
+                    background: transparent;
+
+                    play-btn := TouchArea {
                         width: 42px;
                         height: 42px;
-                        border-radius: 21px;
-                        background: transparent;
+                        clicked => { root.play-pause-clicked(); }
+                        Rectangle {
+                            width: 42px;
+                            height: 42px;
+                            border-radius: 21px;
+                            background: transparent;
 
-                        // 暂停状态 → 显示 pause-circle
-                        if root.play-state == PlayState.Playing : Image {
-                            source: @image-url("icons/pause-circle.svg");
-                            width: 26px;
-                            height: 26px;
-                            colorize: Theme.footer-text;
-                            horizontal-alignment: center;
-                            vertical-alignment: center;
-                        }
-                        // 其他状态 → 显示 play-circle
-                        if root.play-state != PlayState.Playing : Image {
-                            source: @image-url("icons/play-circle.svg");
-                            width: 26px;
-                            height: 26px;
-                            colorize: Theme.footer-text;
-                            horizontal-alignment: center;
-                            vertical-alignment: center;
+                            // 暂停状态 → 显示 pause-circle
+                            if root.play-state == PlayState.Playing : Image {
+                                source: @image-url("icons/pause-circle.svg");
+                                width: 26px;
+                                height: 26px;
+                                x: 8px;
+                                y: 8px;
+                                colorize: Theme.footer-text;
+                            }
+                            // 其他状态 → 显示 play-circle
+                            if root.play-state != PlayState.Playing : Image {
+                                source: @image-url("icons/play-circle.svg");
+                                width: 26px;
+                                height: 26px;
+                                x: 8px;
+                                y: 8px;
+                                colorize: Theme.footer-text;
+                            }
                         }
                     }
                 }
 
                 // 下一首 ⏭ → skip-forward.svg
-                next-touch := TouchArea {
-                    height: 22px;
-                    clicked => { root.next-clicked(); }
-                    Image {
-                        source: @image-url("icons/skip-forward.svg");
+                Rectangle {
+                    width: 22px;
+                    height: 42px;
+                    background: transparent;
+
+                    next-touch := TouchArea {
                         width: 22px;
                         height: 22px;
-                        colorize: Theme.footer-text;
-                        opacity: next-touch.pressed ? 0.6 : 1.0;
+                        y: 10px;
+                        clicked => { root.next-clicked(); }
+                        Image {
+                            source: @image-url("icons/skip-forward.svg");
+                            width: 22px;
+                            height: 22px;
+                            colorize: Theme.footer-text;
+                            opacity: next-touch.pressed ? 0.6 : 1.0;
+                        }
                     }
                 }
             }
@@ -132,38 +158,54 @@ export component Footer {
             // 右侧：播放模式 + 音量
             // ====================
             HorizontalLayout {
+                height: 42px;
                 spacing: 10px;
-                alignment: center;
 
                 // 随机模式 🔀 → shuffle.svg（开=accent色，关=半透明）
-                shuffle-touch := TouchArea {
-                    height: 18px;
-                    clicked => {
-                        root.shuffle-on = !root.shuffle-on;
-                        root.shuffle-toggled(root.shuffle-on);
-                    }
-                    Image {
-                        source: @image-url("icons/shuffle.svg");
+                Rectangle {
+                    width: 18px;
+                    height: 42px;
+                    background: transparent;
+
+                    shuffle-touch := TouchArea {
                         width: 18px;
                         height: 18px;
-                        colorize: root.shuffle-on ? Theme.accent : Theme.footer-text;
-                        opacity: root.shuffle-on ? 1.0 : 0.4;
+                        y: 12px;
+                        clicked => {
+                            root.shuffle-on = !root.shuffle-on;
+                            root.shuffle-toggled(root.shuffle-on);
+                        }
+                        Image {
+                            source: @image-url("icons/shuffle.svg");
+                            width: 18px;
+                            height: 18px;
+                            colorize: root.shuffle-on ? Theme.accent : Theme.footer-text;
+                            opacity: root.shuffle-on ? 1.0 : 0.4;
+                        }
                     }
                 }
 
                 // 循环模式 🔁 → repeat-once.svg
-                loop-touch := TouchArea {
-                    height: 18px;
-                    clicked => {
-                        root.loop-on = !root.loop-on;
-                        root.loop-toggled(root.loop-on);
-                    }
-                    Image {
-                        source: @image-url("icons/repeat-once.svg");
+                Rectangle {
+                    width: 18px;
+                    height: 42px;
+                    background: transparent;
+
+                    loop-touch := TouchArea {
                         width: 18px;
                         height: 18px;
-                        colorize: root.loop-on ? Theme.accent : Theme.footer-text;
-                        opacity: root.loop-on ? 1.0 : 0.4;
+                        y: 12px;
+                        clicked => {
+                            root.loop-on = !root.loop-on;
+                            root.loop-toggled(root.loop-on);
+                        }
+                        Image {
+                            source: @image-url("icons/repeat-once.svg");
+                            width: 18px;
+                            height: 18px;
+                            colorize: root.loop-on ? Theme.accent : Theme.footer-text;
+                            opacity: root.loop-on ? 1.0 : 0.4;
+                        }
                     }
                 }
 
@@ -171,13 +213,14 @@ export component Footer {
                 // 用 Rectangle 固定 18x18 确保在 layout 中不拉伸且垂直居中
                 Rectangle {
                     width: 24px;
-                    height: 18px;
+                    height: 42px;
                     // mute
                     if root.volume == 0.0 : Image {
                         source: @image-url("icons/speaker-x.svg");
                         width: 18px;
                         height: 18px;
                         x: (parent.width - 18px) / 2;
+                        y: 12px;
                         colorize: Theme.footer-text;
                         opacity: 0.7;
                     }
@@ -187,6 +230,7 @@ export component Footer {
                         width: 18px;
                         height: 18px;
                         x: (parent.width - 18px) / 2;
+                        y: 12px;
                         colorize: Theme.footer-text;
                         opacity: 0.7;
                     }
@@ -196,19 +240,28 @@ export component Footer {
                         width: 18px;
                         height: 18px;
                         x: (parent.width - 18px) / 2;
+                        y: 12px;
                         colorize: Theme.footer-text;
                         opacity: 0.7;
                     }
                 }
 
                 // 音量滑块
-                vol-slider := Slider {
-                    minimum: 0.0;
-                    maximum: 100.0;
-                    value <=> root.volume;
+                Rectangle {
                     width: 80px;
-                    changed(vol) => {
-                        root.volume-changed(vol);
+                    height: 42px;
+                    background: transparent;
+
+                    vol-slider := Slider {
+                        minimum: 0.0;
+                        maximum: 100.0;
+                        value <=> root.volume;
+                        width: 80px;
+                        height: 24px;
+                        y: 9px;
+                        changed(vol) => {
+                            root.volume-changed(vol);
+                        }
                     }
                 }
             }

@@ -1,17 +1,18 @@
 // ============================================================
-// header.slint — 顶部栏
+// Header
 // ============================================================
-// 布局: [图标] [标题] [搜索框] ———— [主题色块按钮]
+// Layout:
+// [Title] ................................ [Toolbar Group]
 //
-// 预留 callback:
-//   search-submitted(string) — 用户回车搜索时触发，Rust 侧过滤列表
-//   scan-folder-clicked()     — 用户点扫描按钮时触发，Rust 侧弹出文件夹选择器
+// Toolbar Group:
+// [Search capsule] [Scan capsule] [Theme capsule]
 //
-// 预留 property:
-//   window-title: string — 窗口标题，Rust 侧可动态设置（如 "Music Library · 15 首歌"）
+// Notes:
+// - Search uses TextInput instead of LineEdit so we can fully control
+//   the visual style and avoid the native Windows clear button / frame.
+// - Rust can connect to the callbacks below.
 // ============================================================
 
-import { LineEdit } from "std-widgets.slint";
 import { ThemeMode } from "theme.slint";
 import { Theme } from "theme.slint";
 
@@ -24,104 +25,333 @@ export component Header {
     height: 100%;
     width: 100%;
 
-    HorizontalLayout {
-        padding-left: 16px;
-        padding-right: 16px;
-        alignment: center;
-        spacing: 12px;
-        // ===== 左侧：标题 =====
-        Text {
-            text: window-title;
-            color: Theme.text-main;
-            font-size: 22px;
-            font-weight: 700;
-            vertical-alignment: center;
-        }
+    Rectangle {
+        width: 100%;
+        height: 100%;
+        background: transparent;
 
-        // ===== 弹簧：把按钮推到右边 =====
-        Rectangle {
-            horizontal-stretch: 1;
-        }
+        HorizontalLayout {
+            width: parent.width;
+            height: 52px;
+            y: (parent.height - 52px) / 2;
+            padding-left: 22px;
+            padding-right: 22px;
+            spacing: 16px;
 
-        // ===== 搜索框 =====
-        search-input := LineEdit {
-            width: 220px;
-            // height: 18px;
-            preferred-height: 30px;
-            placeholder-text: "搜索歌曲…";
-            // 回车时触发 Rust 侧搜索
-            accepted => { root.search-submitted(search-input.text); }
-        }
-
-        // ===== 扫描文件夹按钮 =====
-        scan-touch := TouchArea {
-            height: 22px;
-            clicked => { root.scan-folder-clicked(); }
-            Image {
-                source: @image-url("icons/folder-open.svg");
-                width: 22px;
-                height: 22px;
-                colorize: Theme.text-main;
-                opacity: scan-touch.pressed ? 0.5 : 0.7;
+            Text {
+                text: window-title;
+                color: Theme.text-main;
+                font-size: 22px;
+                font-weight: 700;
+                vertical-alignment: center;
             }
-        }
 
-        // ===== 主题切换色块按钮组 =====
-        // 用 Rectangle 模拟色块按钮，比 std Button 更轻量
-
-        // Light
-        TouchArea {
-            height: 18px;
-            clicked => { Theme.mode = ThemeMode.light; }
             Rectangle {
-                width: 18px;
-                height: 18px;
-                border-radius: 9px;
-                background: #FAFAFA;
-                border-width: Theme.mode == ThemeMode.light ? 2px : 0px;
-                border-color: Theme.accent;
+                horizontal-stretch: 1;
+                background: transparent;
             }
-        }
 
-        // Dark
-        TouchArea {
-            height: 18px;
-            clicked => { Theme.mode = ThemeMode.dark; }
             Rectangle {
-                width: 18px;
-                height: 18px;
-                border-radius: 9px;
-                background: #121212;
-                border-width: Theme.mode == ThemeMode.dark ? 2px : 0px;
-                border-color: Theme.accent;
-            }
-        }
+                width: 592px;
+                height: 52px;
+                border-radius: 26px;
+                background: Theme.toolbar-group-bg;
+                border-width: 1px;
+                border-color: Theme.toolbar-group-border;
 
-        // Amber
-        TouchArea {
-            height: 18px;
-            clicked => { Theme.mode = ThemeMode.amber; }
-            Rectangle {
-                width: 18px;
-                height: 18px;
-                border-radius: 9px;
-                background: #FDF6EE;
-                border-width: Theme.mode == ThemeMode.amber ? 2px : 0px;
-                border-color: Theme.accent;
-            }
-        }
+                HorizontalLayout {
+                    width: parent.width;
+                    height: parent.height;
+                    padding-left: 8px;
+                    padding-right: 8px;
+                    spacing: 10px;
 
-        // Dusk
-        TouchArea {
-            height: 18px;
-            clicked => { Theme.mode = ThemeMode.dusk; }
-            Rectangle {
-                width: 18px;
-                height: 18px;
-                border-radius: 9px;
-                background: #1B1B2F;
-                border-width: Theme.mode == ThemeMode.dusk ? 2px : 0px;
-                border-color: Theme.accent;
+                    Rectangle {
+                        width: 338px;
+                        height: 40px;
+                        background: transparent;
+
+                        search-shell := Rectangle {
+                            width: parent.width;
+                            height: parent.height;
+                            border-radius: 20px;
+                            background: Theme.search-bg;
+                            border-width: 1px;
+                            border-color: search-input.has-focus ? Theme.accent : Theme.search-border;
+
+                            if search-input.has-focus : Rectangle {
+                                x: -2px;
+                                y: -2px;
+                                width: parent.width + 4px;
+                                height: parent.height + 4px;
+                                border-radius: 22px;
+                                background: transparent;
+                                border-width: 2px;
+                                border-color: Theme.search-focus-ring;
+                            }
+
+                            Image {
+                                source: @image-url("icons/magnifying-glass.svg");
+                                x: 14px;
+                                y: 11px;
+                                width: 18px;
+                                height: 18px;
+                                colorize: Theme.search-icon;
+                                opacity: search-input.has-focus ? 0.95 : 0.78;
+                            }
+
+                            if search-input.text.is-empty : Text {
+                                x: 42px;
+                                y: 0px;
+                                width: 210px;
+                                height: parent.height;
+                                text: "Search songs, artists, or paths";
+                                color: Theme.search-placeholder;
+                                font-size: 14px;
+                                vertical-alignment: center;
+                            }
+
+                            search-input := TextInput {
+                                x: 42px;
+                                y: 5px;
+                                width: parent.width - 80px;
+                                height: 30px;
+                                text: "";
+                                color: Theme.text-main;
+                                font-size: 14px;
+                                font-weight: 500;
+                                vertical-alignment: center;
+                                single-line: true;
+                                selection-background-color: Theme.accent;
+                                selection-foreground-color: #FFFFFF;
+                                accepted => {
+                                    root.search-submitted(search-input.text);
+                                }
+                            }
+
+                            if !search-input.text.is-empty : Rectangle {
+                                width: 18px;
+                                height: 18px;
+                                x: parent.width - 30px;
+                                y: 11px;
+                                border-radius: 9px;
+                                background: clear-touch.pressed ? Theme.hover-bg : Theme.toolbar-chip-border;
+
+                                clear-touch := TouchArea {
+                                    width: 18px;
+                                    height: 18px;
+                                    clicked => {
+                                        search-input.text = "";
+                                        search-input.focus();
+                                    }
+                                }
+
+                                Text {
+                                    text: "×";
+                                    width: 100%;
+                                    height: 100%;
+                                    color: Theme.search-icon;
+                                    font-size: 13px;
+                                    font-weight: 700;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        width: 96px;
+                        height: 40px;
+                        border-radius: 20px;
+                        background: scan-touch.pressed ? Theme.hover-bg : Theme.search-bg;
+                        border-width: 1px;
+                        border-color: Theme.search-border;
+
+                        scan-touch := TouchArea {
+                            width: parent.width;
+                            height: parent.height;
+                            clicked => {
+                                root.scan-folder-clicked();
+                            }
+                        }
+
+                        Image {
+                            source: @image-url("icons/folder-open.svg");
+                            x: 14px;
+                            y: 10px;
+                            width: 18px;
+                            height: 18px;
+                            colorize: Theme.text-main;
+                            opacity: scan-touch.pressed ? 0.56 : 0.84;
+                        }
+
+                        Text {
+                            x: 39px;
+                            y: 0px;
+                            width: 42px;
+                            height: parent.height;
+                            text: "Scan";
+                            color: Theme.text-main;
+                            font-size: 13px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    Rectangle {
+                        width: 132px;
+                        height: 40px;
+                        border-radius: 20px;
+                        background: Theme.toolbar-chip-bg;
+                        border-width: 1px;
+                        border-color: Theme.toolbar-chip-border;
+
+                        HorizontalLayout {
+                            width: parent.width;
+                            height: parent.height;
+                            padding-left: 10px;
+                            padding-right: 10px;
+                            spacing: 6px;
+
+                            Rectangle {
+                                width: 24px;
+                                height: 40px;
+                                background: transparent;
+
+                                light-touch := TouchArea {
+                                    x: 0px;
+                                    y: 8px;
+                                    width: 24px;
+                                    height: 24px;
+                                    clicked => { Theme.mode = ThemeMode.light; }
+
+                                    if Theme.mode == ThemeMode.light : Rectangle {
+                                        x: 0px;
+                                        y: 0px;
+                                        width: 24px;
+                                        height: 24px;
+                                        border-radius: 12px;
+                                        background: Theme.hover-bg;
+                                    }
+
+                                    Rectangle {
+                                        x: 4px;
+                                        y: 4px;
+                                        width: 16px;
+                                        height: 16px;
+                                        border-radius: 8px;
+                                        background: #FAFAFA;
+                                        border-width: Theme.mode == ThemeMode.light ? 2px : 0px;
+                                        border-color: Theme.accent;
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                width: 24px;
+                                height: 40px;
+                                background: transparent;
+
+                                dark-touch := TouchArea {
+                                    x: 0px;
+                                    y: 8px;
+                                    width: 24px;
+                                    height: 24px;
+                                    clicked => { Theme.mode = ThemeMode.dark; }
+
+                                    if Theme.mode == ThemeMode.dark : Rectangle {
+                                        x: 0px;
+                                        y: 0px;
+                                        width: 24px;
+                                        height: 24px;
+                                        border-radius: 12px;
+                                        background: Theme.hover-bg;
+                                    }
+
+                                    Rectangle {
+                                        x: 4px;
+                                        y: 4px;
+                                        width: 16px;
+                                        height: 16px;
+                                        border-radius: 8px;
+                                        background: #121212;
+                                        border-width: Theme.mode == ThemeMode.dark ? 2px : 0px;
+                                        border-color: Theme.accent;
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                width: 24px;
+                                height: 40px;
+                                background: transparent;
+
+                                amber-touch := TouchArea {
+                                    x: 0px;
+                                    y: 8px;
+                                    width: 24px;
+                                    height: 24px;
+                                    clicked => { Theme.mode = ThemeMode.amber; }
+
+                                    if Theme.mode == ThemeMode.amber : Rectangle {
+                                        x: 0px;
+                                        y: 0px;
+                                        width: 24px;
+                                        height: 24px;
+                                        border-radius: 12px;
+                                        background: Theme.hover-bg;
+                                    }
+
+                                    Rectangle {
+                                        x: 4px;
+                                        y: 4px;
+                                        width: 16px;
+                                        height: 16px;
+                                        border-radius: 8px;
+                                        background: #FDF6EE;
+                                        border-width: Theme.mode == ThemeMode.amber ? 2px : 0px;
+                                        border-color: Theme.accent;
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                width: 24px;
+                                height: 40px;
+                                background: transparent;
+
+                                dusk-touch := TouchArea {
+                                    x: 0px;
+                                    y: 8px;
+                                    width: 24px;
+                                    height: 24px;
+                                    clicked => { Theme.mode = ThemeMode.dusk; }
+
+                                    if Theme.mode == ThemeMode.dusk : Rectangle {
+                                        x: 0px;
+                                        y: 0px;
+                                        width: 24px;
+                                        height: 24px;
+                                        border-radius: 12px;
+                                        background: Theme.hover-bg;
+                                    }
+
+                                    Rectangle {
+                                        x: 4px;
+                                        y: 4px;
+                                        width: 16px;
+                                        height: 16px;
+                                        border-radius: 8px;
+                                        background: #1B1B2F;
+                                        border-width: Theme.mode == ThemeMode.dusk ? 2px : 0px;
+                                        border-color: Theme.accent;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
