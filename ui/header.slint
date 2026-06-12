@@ -61,7 +61,8 @@ export component Header {
 
                 HorizontalLayout {
                     width: parent.width;
-                    height: parent.height;
+                    height: 40px;
+                    y: (parent.height - 40px) / 2;
                     padding-left: 8px;
                     padding-right: 8px;
                     spacing: 10px;
@@ -179,7 +180,7 @@ export component Header {
                         Image {
                             source: @image-url("icons/folder-open.svg");
                             x: 14px;
-                            y: 10px;
+                            y: 11px;
                             width: 18px;
                             height: 18px;
                             colorize: Theme.text-main;
