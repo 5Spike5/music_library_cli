@@ -593,6 +593,79 @@ if player.is_empty() {
 9. 加暂停、继续、上一首、下一首。
 10. 加自动切歌。
 
+## 2026-06-13 当前第一阶段 TUI 已补齐
+
+本轮已经把第一阶段 TUI 的主干补齐，重点不是界面华丽，而是让架构真正跑起来：
+
+- `src/main.rs`：恢复为真正入口，默认 `cargo run` 启动 TUI，`list/scan/search` 继续可用。
+- `src/lib.rs`：声明新架构模块，并保留曲库读取、保存、扫描、搜索等基础函数。
+- `src/models`：放 `Song` 和 `Library`，并提供 `next_index`、`previous_index`。
+- `src/state`：放 `AppState`、`PlaybackState` 和 `SharedAppState = Arc<Mutex<AppState>>`。
+- `src/commands.rs`：定义 UI 发给播放线程的 `PlaybackCommand`。
+- `src/events.rs`：定义播放线程发回 UI 的 `PlaybackEvent`。
+- `src/playback`：播放线程和 `rodio` 封装，支持播放、暂停、继续、上一首、下一首、停止、自动切歌。
+- `src/ui_terminal`：终端界面，支持方向键选择、Enter 播放、空格暂停/继续、`n/p` 上下一首、`s` 停止、`q` 退出。
+- `src/handlers`：把用户操作转成命令，把播放事件转成状态更新。
+
+第一阶段还没有做的内容：
+
+- 没有显示真实播放进度。
+- 没有显示歌曲总时长。
+- 没有 Seek 拖动或跳转。
+- 没有音量控制。
+- 没有随机播放和单曲循环。
+- 没有把 TUI 状态同步到 Slint GUI。
+
+## 当前 TUI 使用方式
+
+先扫描音乐文件夹：
+
+```powershell
+cargo run -- scan E:\Music
+```
+
+启动 TUI 播放器：
+
+```powershell
+cargo run
+```
+
+也可以显式启动：
+
+```powershell
+cargo run -- play
+```
+
+TUI 按键：
+
+- `Up/Down`：选择歌曲。
+- `Enter`：播放当前选中歌曲。
+- `Space`：暂停或继续。
+- `n` 或右方向键：下一首。
+- `p` 或左方向键：上一首。
+- `s`：停止播放。
+- `q` 或 `Esc`：退出。
+
+## 下一步学习建议
+
+下一步不要马上接 Slint。建议先把 TUI 的线程模型吃透，因为 GUI 也会复用同样的思想。
+
+建议阅读顺序：
+
+1. `src/main.rs`：看程序如何从 CLI 进入 `app::run()`。
+2. `src/app.rs`：看 `Arc<Mutex<AppState>>`、`mpsc::channel`、播放线程、TUI 是怎么组装起来的。
+3. `src/commands.rs` 和 `src/events.rs`：理解 UI 和播放线程的通信协议。
+4. `src/playback/engine.rs`：理解播放线程如何处理命令和自动切歌。
+5. `src/ui_terminal/terminal.rs`：理解 UI 主循环为什么用 `try_recv()` 接事件，而不是阻塞等待。
+6. `src/handlers/event_handler.rs`：理解事件如何变成状态更新。
+
+下一次适合做的练习：
+
+- 给 `PlaybackEngine` 增加 `PlayMode`：顺序播放、单曲循环、列表循环。
+- 给 TUI 增加音量快捷键：`+` 增加音量，`-` 降低音量。
+- 给 `RodioPlayer` 暴露 `position()`，在 TUI 显示当前播放秒数。
+- 把 `library.json` 的乱码问题排查清楚，确保中文歌名保存和读取都是 UTF-8。
+
 ## 对新手最重要的理解
 
 这套架构不是为了显得复杂，而是为了让每个问题都只出现在一个地方：

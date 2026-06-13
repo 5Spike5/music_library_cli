@@ -1,58 +1,37 @@
-// slint::include_modules!();
-//GUI
-// mod player;
-// use player::state::AppState;
-//程序入口，只负责调用 `app::run()`
+use music_library_cli::{
+    app, list_songs, load_library, parse_args, save_library, scan_folder, search_songs, CliCommand,
+    MUSIC_FILE_PATH,
+};
+
 fn main() {
-    // let app = AppWindow::new()?;
-    // let state = AppState::;
+    if let Err(err) = run() {
+        eprintln!("Error: {err}");
+        std::process::exit(1);
+    }
 }
 
+fn run() -> Result<(), String> {
+    let args = std::env::args().skip(1).collect::<Vec<_>>();
+    let command = parse_args(args)?;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// TUI
-// use music_library_cli::*;
-// fn main(){
-//     if let Err(msg) = run() {
-//         eprintln!("Error:{msg}")   ;
-//         std::process::exit(1);
-//     }
-// }
-
-// fn run() ->Result<(),String>{
-//     let args:Vec<String> = std::env::args().skip(1).collect();
-//     let command = music_library_cli::parse_args(args)?;
-//     let mut musics_library = load_library(MUSIC_FILE_PATH).map_err(|e| e.to_string())?;
-
-//     match command {
-//         Command::List => list_songs(&musics_library),
-//         Command::Scan { folder } => {
-//             scan_folder(folder.as_str(), &mut musics_library).map_err(|e|e.to_string())?;
-//             save_library(MUSIC_FILE_PATH, &mut musics_library).map_err(|e|e.to_string())?;
-//         },
-//         Command::Search { keyword } => search_songs(&musics_library, keyword.as_str()),
-//         Command::Play =>{
-//             play_interactive(&musics_library).map_err(|e|e.to_string())?;
-//         }
-//     }
-//     Ok(())
-// }
+    match command {
+        CliCommand::Play => app::run(),
+        CliCommand::List => {
+            let library = load_library(MUSIC_FILE_PATH).map_err(|err| err.to_string())?;
+            list_songs(&library);
+            Ok(())
+        }
+        CliCommand::Search { keyword } => {
+            let library = load_library(MUSIC_FILE_PATH).map_err(|err| err.to_string())?;
+            search_songs(&library, &keyword);
+            Ok(())
+        }
+        CliCommand::Scan { folder } => {
+            let mut library = load_library(MUSIC_FILE_PATH).map_err(|err| err.to_string())?;
+            scan_folder(&folder, &mut library).map_err(|err| err.to_string())?;
+            save_library(MUSIC_FILE_PATH, &library).map_err(|err| err.to_string())?;
+            println!("Scan complete. Library now has {} songs.", library.len());
+            Ok(())
+        }
+    }
+}
